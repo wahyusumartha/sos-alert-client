@@ -1,0 +1,168 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Sos Alert</title>
+<link rel="stylesheet" href="assets/css/style.css" media="screen">
+<!-- reference your own javascript files here -->
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.js"></script>
+<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script> 
+<script src="assets/javascript/script.js"></script>
+<script type="text/javascript">
+	var geocoder;
+	function initialize(){
+		geocoder = new google.maps.Geocoder();
+	}
+
+	function codeAddress(){
+		$('#latitude').remove();
+		$('#longitude').remove();
+		var address = $('#address-text').val();
+		geocoder.geocode({'address' : address}, function(results, status){
+			if(status == google.maps.GeocoderStatus.OK){
+				var latitude = results[0].geometry.location.lat();
+				var longitude = results[0].geometry.location.lng();
+				//alert(latitude + "," + longitude);
+				$('<input/>').attr({
+					type: 'text',
+					id : 'latitude',
+					name: 'latitude',
+					value : "" + latitude + ""
+				}).appendTo('#nothing-latitude');
+
+				$('<input/>').attr({
+					type: 'text',
+					id: 'longitude',
+					name: 'longitude',
+					value: longitude
+				}).appendTo('#nothing-longitude');
+				
+			}else{
+				alert("Geocode was not successful for the following reason: " + status);
+			}
+		});
+	}
+</script>
+</head>
+<body onload="initialize()">
+	<div class="header">SOS Alert!</div>
+	<p class="tagline">
+		Save <span class="orange">people</span> around the <span class="green">world</span>
+		immediately
+	</p>
+	<div id="status">Checking Location.....</div>
+	<div class="mobile-wrapper">
+		<div class="error-message"></div>
+		<div class="success-message"></div>
+		<form action="/alertclient" method="post" id="alert-form">
+			<p>
+				<input type="text" placeholder="Name" name="name"/>
+			</p>
+			<p>
+				<textarea placeholder="Message" name="message"></textarea>
+			</p>
+			<p id="locationNote">
+				Your Location :
+			</p>
+			<p id="address">
+			</p>
+			<p id="yes-latitude">
+			</p>
+			<p id="yes-longitude">
+			</p>
+			<p id="nothing-latitude">
+			</p>
+			<p id="nothing-longitude">
+			</p>
+			<p id="nothing-latlong-button">
+			</p>
+			<p>
+				<select name="priority">
+					<option value="high">High Priority</option>
+					<option value="normal">Normal Priority</option>
+					<option value="low">Low Priority</option>
+				</select>
+			</p>
+			<p id="button-submit">
+			</p>
+			<p>
+				<input class="cancel" type="button" name="cancel" value="Cancel" />
+			</p>
+		</form>
+		<script>
+			function success(position){
+				var s = document.querySelector("#status");
+				
+				if(s.className == 'success'){
+					return;
+				}
+				
+				s.innerHTML = "found you! at : " + position.coords.latitude + "," + position.coords.longitude + "";
+				
+				s.className = 'success';
+				
+				$('<input/>').attr({
+					type: 'submit',
+					name: 'submit-button',
+					id:'submit-button',
+					value: 'submit'
+				}).appendTo('#button-submit');
+				
+				$('<input/>').attr({
+					type: 'text',
+					name: 'latitude',
+					id: 'latitude',
+					value: position.coords.latitude
+				}).appendTo('#yes-latitude');
+				
+				$('<input/>').attr({
+					type: 'text',
+					name: 'longitude',
+					id: 'longitude',
+					value: position.coords.longitude
+				}).appendTo('#yes-longitude'); 
+			}
+			
+			function error(msg){
+				var s = document.querySelector("#status");
+				s.innerHTML = typeof msg == 'string' ? msg : "failed";
+				s.className = 'fail';
+				
+				$('#latitude').remove();
+				$('#longitude').remove();
+				
+				
+				$('#locationNote').text('We can not find your location - Please Type Your Address');
+				
+				$('<input/>').attr({
+					type: 'text',
+					id : 'address-text',
+					name : 'address-text',
+					placeHolder : 'Type Your Address'
+				}).appendTo('#address');
+				
+				
+				$('<input/>').attr({
+					type: 'submit',
+					name: 'submit-button',
+					id: 'submit-button',
+					value: 'submit'
+				}).appendTo('#button-submit');
+				
+				$('<input/>').attr({
+					type: 'button',
+					name: 'getLatLong',
+					value: 'Get My Coordinate',
+					onClick: 'codeAddress()'
+				}).appendTo('#nothing-latlong-button');
+				
+			}
+			
+			if(navigator.geolocation){
+				navigator.geolocation.getCurrentPosition(success,error);
+			} else{
+				error('not supported');
+			}
+		</script>
+	</div>
+</body>
+</html>
